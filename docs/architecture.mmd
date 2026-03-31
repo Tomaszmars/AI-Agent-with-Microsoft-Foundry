@@ -1,0 +1,8 @@
+flowchart LR
+  U[User] -->|Questions| PC[Python Client]
+  PC -->|Conversations API| AG[Agent (Foundry)]
+  AG -->|Knowledge queries| IQ[Foundry IQ Knowledge Service]
+  IQ -->|Vector/Semantic retrieval| AIS[Azure AI Search]
+  IQ -->|Source documents| BLOB[Azure Blob Storage]
+  AG -->|MCP tool access requires approval| MCP[Model Context Protocol]
+  AG -->|Grounded responses + citations| PC
