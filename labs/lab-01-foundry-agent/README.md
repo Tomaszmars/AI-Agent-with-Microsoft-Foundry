@@ -42,6 +42,19 @@ After the agent is created, confirm that:
 ### Objective
 Define the agent's role-based instructions and connect it to Foundry IQ, enabling the agent to retrieve grounded, knowledge-based responses instead of relying solely on the base model.
 
+### Instructions
+
+#### Step 1: Configure Agent Instructions
+Update the agent configuration with the following instruction:
+
+You are a helpful AI assistant for Contoso, specializing in outdoor camping and hiking products.
+
+You must ALWAYS search the knowledge base to answer questions about our products or product catalog. Provide detailed, accurate information and always cite your sources.
+
+If you don't find relevant information in the knowledge base, say so clearly.
+
+Ensure the updated configuration is saved successfully.
+
 ## Notes / Conventions
 - Replace `XXXX` in names like `agent-projectXXXX` with a unique identifier (for example, initials + 4 digits).
 - Use the region that best matches your training requirements: **East US 2**, **Australia East**, or **West US**.
