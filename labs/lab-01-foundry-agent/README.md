@@ -1,11 +1,17 @@
-#### Step 1: Configure Agent Instructions
+#### Step 3: Create and Configure the AI Search Resource
 
-...(Existing content)...
+Provision an AI Search resource with the following configuration:
 
-#### Step 2: Connect to Foundry IQ
-- Ensure all prerequisites are met.
-- Open the Foundry IQ application.
-- Select your desired project.
-- Connect the agent to the Foundry environment.
+- **Subscription:** Keep default
+- **Resource group:** `newagent12-RG`
+- **Service name:** `search-serviceXXXX` (replace `XXXX` with unique identifier)
+- **Location:** West US 2 / West US 3 / Canada East
+- **Pricing Tier:** Standard
+- **Compute Type:** Default
 
-**Important:** Ensure that you have the correct credentials and permissions to connect to Foundry IQ.
+After provisioning:
+
+- Access the resource settings.
+- Enable both options under **API access control** in the **Keys** section.
+
+> **Important:** The AI Search resource must be successfully connected to the agent through Foundry IQ.
