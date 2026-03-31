@@ -1,45 +1,42 @@
-# Lab 1 — Build and Deploy Intelligent AI Agent with Microsoft Foundry
+# Lab 1 — Build and Deploy an Intelligent AI Agent with Microsoft Foundry
 
 ## Overview
-In this lab, you will build and deploy an intelligent AI agent using Microsoft Foundry (Foundry IQ + MCP). You will create a Foundry Project/workspace and prepare the environment needed for subsequent tasks (knowledge, search, storage, and client interaction).
+In this lab, you will build and deploy an intelligent AI agent using Microsoft Foundry (Foundry IQ + MCP). You will:
+- Create a Foundry Project (workspace)
+- Prepare the environment for later labs (knowledge, search, storage, and client interaction)
 
-## Challenges
-# Challenge Task 1: Create a Foundry Project
+## Challenge Task 1: Create a Foundry Project
 
-## Step 1: Access Microsoft Foundry Portal
+### Step 1: Access the Microsoft Foundry Portal
+Open the Microsoft Foundry portal.
 
-## Step 2: Enable New Foundry Experience
+### Step 2: Enable the New Foundry Experience
+Turn on the **New Foundry Experience** (if prompted).
 
-## Step 3: Create and Configure the Project
-
-Create a new project with the following configuration:
+### Step 3: Create and configure the project
+Create a new project with the following settings:
 
 - **Project name:** `agent-projectXXXX` (replace `XXXX` with your unique identifier)
-- **Subscription:** Keep default
-- **Resource group:** Create a new resource group → Name: `newagent12-RG`
-- **Microsoft Foundry resource:** Keep default
-- **Region:** East US 2 / Australia East / West US
+- **Subscription:** Use the default subscription
+- **Resource group:** Create a new resource group named `newagent12-RG`
+- **Microsoft Foundry resource:** Use the default
+- **Region:** Choose one: **East US 2**, **Australia East**, or **West US**
 
+## Challenge Task 2: Create an Agent
 
+### Objective
+Create an AI agent in your Foundry project using a default language model. The agent will act as a product expert and will later connect to enterprise knowledge sources.
 
+### Step 1: Configure the agent
+From the project home page, create a new agent with:
 
-Task 2: Create an Agent
-Objective: Create an AI agent within the Foundry project using a default language model. This agent will be configured to act as a product expert and interact with enterprise knowledge sources.
+- **Agent name:** `product-expert-agent`
 
-Instructions
-Step 1: Configure the Agent
-
-From the project home page, initiate agent creation with the following configuration:
-
-Agent name: product-expert-agent
-Step 2: Verify Agent Provisioning
-
-After the agent is created:
-
-A default language model (such as gpt-4.1-mini or gpt-4.1) should be automatically deployed.
-
-The agent playground should open with the model pre-selected and ready for interaction.
+### Step 2: Verify provisioning
+After the agent is created, confirm that:
+- A default language model (for example, `gpt-4.1-mini` or `gpt-4.1`) is automatically deployed.
+- The agent playground opens with the model already selected and ready for testing.
 
 ## Notes / Conventions
-- Replace `XXXX` in names like `agent-projectXXXX` with a unique identifier (e.g., initials + 4 digits).
-- Use the region that matches your training requirements: **East US 2**, **Australia East**, or **West US**.
+- Replace `XXXX` in names like `agent-projectXXXX` with a unique identifier (for example, initials + 4 digits).
+- Use the region that best matches your training requirements: **East US 2**, **Australia East**, or **West US**.
