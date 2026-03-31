@@ -24,6 +24,12 @@ You will provision Azure resources, connect enterprise documents to an agent usi
 | **Model Context Protocol (MCP)** | Governance framework that requires explicit user approval before the agent accesses external tools/knowledge sources. |
 | **Python client application** | Demonstrates programmatic interaction with the agent via the Conversations API, including MCP approvals. |
 
+## Diagram
+
+
+<img width="8037" height="1070" alt="Foundry Knowledge Service-2026-03-31-114943" src="https://github.com/user-attachments/assets/bc291dde-c74c-4a00-ba41-e7821847d14e" />
+
+
 ## Agent capabilities
 
 - **Role-based instructions**: prompts that define the agent’s domain expertise and behavior
