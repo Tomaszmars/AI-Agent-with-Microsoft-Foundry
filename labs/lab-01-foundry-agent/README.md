@@ -37,6 +37,11 @@ After the agent is created, confirm that:
 - A default language model (for example, `gpt-4.1-mini` or `gpt-4.1`) is automatically deployed.
 - The agent playground opens with the model already selected and ready for testing.
 
+## Challenge Task 3: Configure Your Agent and Foundry IQ
+
+### Objective
+Define the agent's role-based instructions and connect it to Foundry IQ, enabling the agent to retrieve grounded, knowledge-based responses instead of relying solely on the base model.
+
 ## Notes / Conventions
 - Replace `XXXX` in names like `agent-projectXXXX` with a unique identifier (for example, initials + 4 digits).
 - Use the region that best matches your training requirements: **East US 2**, **Australia East**, or **West US**.
