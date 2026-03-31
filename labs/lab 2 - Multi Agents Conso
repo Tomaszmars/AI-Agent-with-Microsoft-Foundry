@@ -1,0 +1,791 @@
+# Challenge Lab Project 2: Build and Orchestrate a Multi‑Agent Custom Automation Engine Using Foundry IQ
+
+**Scenario:** Modernize Enterprise Operations – Multi‑Agent Custom Automation Engine Solution Accelerator
+
+---
+## Scenario Overview
+
+Contoso Ltd. is a global enterprise with multiple departments, including Human Resources, IT Operations, Finance, Legal, and Marketing. As the company scales, many internal business processes require coordination across teams, systems, and approvals. These workflows are currently:
+
+- Manual
+- Time‑consuming
+- Prone to delays due to frequent handoffs and limited visibility
+
+To modernize its operations, Contoso is implementing a **Multi‑Agent Custom Automation Engine** powered by AI. Instead of relying on a single automation script or chatbot, Contoso uses a **team of specialized AI agents** that collaboratively plan, execute, and validate complex business tasks from a single user request.
+
+In this lab, you will step into the role of a **Contoso automation engineer** and deploy this multi‑agent automation platform. You will explore how AI agents work together to:
+
+- Interpret business requests
+- Break them into actionable steps
+- Coordinate across domains
+- Deliver end‑to‑end outcomes for real‑world enterprise scenarios
+
+---
+## Learning Objectives
+
+By completing this lab, you will be able to:
+
+- **Explain the architecture** of a multi‑agent automation system and how multiple AI agents collaborate to solve complex enterprise workflows at Contoso.
+- **Deploy the Multi‑Agent Custom Automation Engine in Azure** using the provided solution accelerator and infrastructure templates.
+- **Observe agent orchestration in action**, including task planning, delegation, execution, and validation across multiple agents.
+- **Execute real‑world Contoso business workflows** by submitting high‑level natural language requests to the automation engine.
+- **Analyze agent behavior and execution flow** using logs, traces, and execution summaries.
+- **Customize or extend agent capabilities** to support additional Contoso business scenarios.
+
+Upon completion of this challenge lab, you will also have gained practical experience with:
+
+- **Multi‑Agent Architecture** – Understanding how specialized AI agents collaborate to solve complex enterprise workflows.
+
+- **Azure AI Services** – Implementing Azure OpenAI Service and Microsoft Agent Framework for business automation.
+
+- **Enterprise Workflow Automation** – Developing and deploying AI solutions for real‑world business process modernization.
+
+- **Agentic AI Systems** – Experiencing how multiple agents coordinate, delegate tasks, and maintain execution quality.
+
+- **Business Process Intelligence** – Learning to interpret and validate AI‑generated workflow automation results.
+
+---
+## Prerequisites
+
+All prerequisites are pre‑configured in the **CloudLabs** environment. If you are using your **own Azure subscription and local machine**, ensure the following tools and access are in place to complete this challenge.
+### Azure Access
+
+- Access to the **Azure Portal**: [https://portal.azure.com/](https://portal.azure.com/)
+- Sufficient permissions to:
+    - Create **resource groups**
+    - Deploy **Azure Container Apps** or similar compute services
+    - Deploy and use **Azure OpenAI** resources (where available in your subscription)
+
+> **Important:** Lack of permissions is the number one cause of deployment failures. Make sure your account can create and manage the required resources before you begin.### Required Tools (Local Environment)
+If you are working from your own machine, install or verify the following:
+
+- **Development Environment: Visual Studio Code**[https://code.visualstudio.com/](https://code.visualstudio.com/)
+- **Azure Developer CLI (**`azd`**)** – used to deploy the solution accelerator to Azure: [https://aka.ms/install-azd](https://aka.ms/install-azd)
+- **Python 3.11+** – required to run AI agent scripts and manage dependencies: [https://www.python.org/downloads/](https://www.python.org/downloads/)
+- **Git** – used to clone the lab repository: [https://git-scm.com/downloads](https://git-scm.com/downloads)
+- **Docker Desktop** – enables containerization and local testing: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)*Ensure Docker Desktop is running during local testing; you do not need to sign in to Docker Hub for this lab.*
+- **PowerShell Core** – used for automation scripts (especially on Windows): [https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows)
+
+---
+## Architecture Components
+
+The Mermaid diagram below summarizes the high‑level architecture of the multi‑agent automation engine:
+
+```mermaid
+graph TD
+  subgraph Client
+    UI[Web UI]
+  end
+
+  subgraph Azure["Azure Deployment Runtime"]
+    AF[Agent Framework]
+    PA[Planning Agent]
+    CA[Coordination Agent]
+
+    subgraph DomainAgents["Domain‑Specific Agents"]
+      HR[HR Agent]
+      Mkt[Marketing Agent]
+      CS[Customer Success Agent]
+      Fin[Finance Agent]
+      IT[IT Operations Agent]
+    end
+
+    WF[Workflow Engine]
+    OF[Output Formatter]
+    LT[Logging & Telemetry]
+  end
+
+  OAI[Azure OpenAI Endpoint]
+
+  UI --> AF
+  AF --> PA
+  AF --> CA
+  CA --> DomainAgents
+  DomainAgents --> WF
+  WF --> OF
+  WF --> LT
+
+  AF --> OAI
+  PA --> OAI
+  CA --> OAI
+  DomainAgents --> OAI
+```
+
+This solution accelerator implements a **multi‑agent automation engine** with the following key components:
+### User Interface (UI)
+
+A **web‑based front‑end** where users:
+
+- Submit **natural language business requests**
+- Monitor **multi‑agent execution progress** and results
+### Agent Framework (Microsoft Agent Framework)
+
+A **multi‑agent orchestration layer** that:
+
+- Manages multiple **LLM‑based agents** with specialized roles
+- Coordinates their collaboration within enterprise automation workflows
+### Planning Agent
+
+An **LLM‑based agent** responsible for:
+
+- Interpreting high‑level business requests
+- Breaking them into **actionable tasks**
+- Creating **execution plans** for the rest of the agents
+### Coordination Agent
+
+An agent that:
+
+- Oversees workflow execution across all specialized agents
+- Ensures **task delegation**, **ordering**, and **handoffs**
+- Monitors and maintains **execution quality** across the multi‑agent system
+### Domain‑Specific Agents
+
+Specialized agents for different business functions:
+
+- **HR Agent**
+    - Handles employee onboarding, paperwork, and compliance training workflows
+- **Marketing Agent**
+    - Manages product release planning, campaign coordination, and content creation
+- **Customer Success Agent**
+    - Analyzes customer satisfaction data and recommends remediation steps
+- **Finance Agent**
+    - Reviews RFPs, performs risk assessments, and handles contract compliance
+- **IT Operations Agent**
+    - Manages system provisioning, access controls, and technical workflows
+### Azure OpenAI Endpoint
+
+The **foundation model endpoint** (for example, GPT‑4) hosted on Azure that powers each agent’s intelligence and natural language reasoning.
+### Prompt Engineering Layer
+
+A **prompt configuration layer** that defines:
+
+- System prompts for each agent’s role and responsibilities
+- User prompts and patterns for enterprise automation scenarios
+### Microsoft Foundry Toolkit
+
+A toolkit that provides:
+
+- Templates for **agentic automation workloads**
+- Deployment tooling and configurations for Azure‑hosted agent solutions
+### Workflow Engine
+
+A core service that:
+
+- Manages **task execution and dependencies**
+- Coordinates **handoffs** between agents
+- Maintains **state and context** across the entire workflow
+### Output Formatter
+
+A service that:
+
+- Converts raw agent responses into **structured outputs**, such as:
+    - Actionable deliverables
+    - Reports
+    - Workflow summaries and status views
+### Logging & Telemetry
+
+A monitoring and observability layer that:
+
+- Tracks **agent performance** and **workflow success rates**
+- Captures **automation metrics**, logs, and traces for continuous improvement
+### Deployment Runtime (Azure)
+
+A managed runtime environment, typically based on **Azure Container Apps** (or similar Azure compute), that:
+
+- Hosts the multi‑agent automation application
+- Provides **scalability**, **resilience**, and **secure connectivity** to other Azure services
+
+---
+## Accessing the Azure Portal (Lab Environment)
+
+If you are using the **CloudLabs** environment, follow these steps to sign in to Azure:
+
+1. Open a **private/incognito** window in your browser.
+2. Navigate to the Azure Portal: [https://portal.azure.com/](https://portal.azure.com/)
+3. On the **Sign in to Microsoft Azure** page, enter the following:
+    - **Email/Username:** Provided in the **Environment** tab of your lab interface
+    - Click **Next**
+4. Enter the **Password** from the **Environment** tab and click **Sign in**.
+5. If prompted with **“Stay signed in?”**, select **No**.
+6. If you see a **“You have free Azure Advisor recommendations!”** pop‑up, close it to continue with the challenge.
+7. If you see an **“Action Required”** pop‑up, click **Ask later**.
+8. If a **“Welcome to Microsoft Azure”** pop‑up appears, click **Cancel** to skip the tour.
+
+You should now be at the Azure Portal home screen and ready to proceed with the challenge tasks.
+
+---
+## Challenge Task 1: Provision Azure Resources and Deploy the Multi‑Agent Framework
+
+**Objective** Provision the core Azure infrastructure required for the multi‑agent automation engine (compute, storage, networking, AI services) and ensure deployment happens in a **supported region**. This establishes the foundation for real‑time workflow automation and agent coordination.
+### Supported Regions
+
+You **must** deploy resources only in the following supported regions:
+
+- East US
+- East US 2
+- France Central
+- Southeast Asia
+- Canada East
+- Sweden Central
+
+> **Important:** Deploying outside these regions will cause deployment failures, especially for Azure OpenAI and related services.### Instructions
+1. **Create a resource group** Use a clear, consistent naming convention. For example:
+    `agentic-rg` or `contoso-agentic-rg`
+
+    Example using the Azure CLI:
+
+    ```bash
+    az group create \
+      --name agentic-rg \
+      --location eastus2
+    ```
+
+    If you prefer the Azure Portal:
+
+    - In the Azure Portal, search for **Resource groups**.
+    - Click **Create**.
+    - Enter:
+        - **Subscription:** Your assigned subscription
+        - **Resource group name:** e.g., `agentic-rg`
+        - **Region:** One of the supported regions listed above (e.g., **East US 2**)
+    - Click **Review + create**, then **Create**.
+2. **Prepare for subsequent deployments** Ensure you know:
+    - The **name of your resource group** (e.g., `agentic-rg`)
+    - The **region** you selected (e.g., `East US 2`)
+
+    You will reference these values when running `azd` or deployment scripts in later tasks to deploy:
+
+    - The multi‑agent application
+    - Azure OpenAI resources
+    - Supporting storage, networking, and logging components
+
+---
+## Challenge Task 2: Clone and Configure the Multi‑Agent Application
+
+**Objective** Clone the **Multi‑Agent Custom Automation Engine Solution Accelerator** project from GitHub and prepare your local environment for deployment. This includes downloading the code, opening it in your editor, and ensuring Docker is ready for local builds and testing.
+### Instructions
+
+1. **Clone the GitHub repository** In a terminal (PowerShell, Bash, or integrated terminal in VS Code), run:
+    ```bash
+    git clone https://github.com/technofocus-pte/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator.git
+    ```
+2. **Open the project in Visual Studio Code** Change into the cloned project directory and open it in VS Code:
+    ```bash
+    cd Multi-Agent-Custom-Automation-Engine-Solution-Accelerator
+    code .
+    ```
+
+    If VS Code does not open automatically, you can also:
+
+    - Open **Visual Studio Code** manually.
+    - Select **File > Open Folder...**.
+    - Browse to the `Multi-Agent-Custom-Automation-Engine-Solution-Accelerator` folder and open it.
+3. **Start Docker Desktop**
+    - Launch **Docker Desktop** on your machine.
+    - Wait until Docker reports that it is **running** and ready.
+    - Keep Docker Desktop running in the background for the duration of the lab.
+    - You **do not** need to sign in to Docker Hub for this lab.
+4. *(Preview of upcoming steps)* In subsequent tasks, you will:
+    - Configure environment settings (for example, `.env` or `azure.yaml`/`azure.yaml` equivalents).
+    - Connect the application to your Azure resources (resource group, region, Azure OpenAI endpoint).
+    - Use `azd` and/or provided scripts to deploy the multi‑agent automation engine to Azure.
+
+---
+## Challenge Task 3: Deploy the Multi‑Agent Automation Engine
+
+**Objective** Deploy the AI‑enabled multi‑agent automation platform to Azure using the Azure Developer CLI (`azd`). In this task, you will authenticate, configure the deployment environment, provision resources, and verify that the application has been deployed successfully.
+
+### Instructions
+
+1. **Sign in to Azure using the Azure CLI**
+
+    In the project root folder (for example, `Multi-Agent-Custom-Automation-Engine-Solution-Accelerator`), open a terminal and run:
+
+    ```bash
+    az login
+    ```
+
+    When the browser window opens:
+
+    - Select **Work or school account**.
+    - Enter the **Username** shown in the **Environment** tab of the lab.
+    - Enter the **TAP (Temporary Access Pass) token** from the **Environment** tab as the password.
+    - Click **Sign in**, and then **Yes** if prompted to stay signed in.
+
+    Return to the terminal and, when prompted to select a subscription, enter `1` to choose the assigned lab subscription.
+
+2. **Create a new `azd` environment**
+
+    Still in the project root, create a new Azure Developer CLI environment (for example, `agentic-env`):
+
+    ```bash
+    azd env new agentic-env
+    ```
+
+    This command initializes a named environment where `azd` will store configuration values (such as subscription, location, and resource group) for subsequent deployments.
+
+3. **Deploy all resources with `azd up`**
+
+    Run the following command from the project root to provision Azure resources and deploy the multi‑agent application:
+
+    ```bash
+    azd up
+    ```
+
+    During deployment, you will be prompted for several values. Use the following options:
+
+    - Enter `y` to log in again if prompted.
+
+    - Select your **current Work or school account**.
+
+    - Select the **assigned subscription** for this lab.
+
+    - For **`azureAiServiceLocation`**, choose **UK South** or **West US** (as specified by the lab environment).
+
+    - For the **infrastructure location** (location for infrastructure parameters), choose **Central US**.
+
+    - When asked to select a **resource group**, choose the existing group you created earlier (for example, `agentic-rg`).
+
+    The deployment may take approximately **20–30 minutes** to complete. Do not close the terminal while `azd up` is running.
+
+4. **Upload team configurations to the web app**
+
+    After `azd up` completes successfully:
+
+    - Open a **PowerShell** terminal in the project root.
+    - Run the configuration script to upload team configurations and data to the deployed web app:
+
+      ```powershell
+      .\infra\scripts\Selecting-Team-Config-And-Data.ps1
+      ```
+
+    - When prompted in the script, enter `6` to **deploy all use cases**.
+
+    This step ensures that all predefined multi‑agent teams and their associated scenarios are available in the running application.
+
+5. **Verify the deployment (high‑level preview)**
+
+    Once the script completes:
+
+    - Note any **endpoint URLs** or **application URLs** printed by `azd up`.
+    - Open the main web app URL in your browser.
+    - Confirm that the **Multi‑Agent Custom Automation Engine** UI loads and that the configured teams/use cases are available.
+
+    In later tasks, you will run end‑to‑end workflows and observe how the agents coordinate to complete real enterprise scenarios.
+
+---
+## Challenge Task 4: End‑User Testing – Multi‑Agent Workflows
+
+**Objective** Validate the multi‑agent automation engine from an **end‑user perspective**. In this task, you will interact with the deployed application through the web UI to confirm that the multi‑agent workflow orchestration behaves correctly for real‑world Contoso scenarios.
+
+### Instructions
+
+1. **Open the resource group in the Azure Portal**
+
+    - In the Azure Portal, navigate to **Resource groups**.
+    - Select the resource group you created for this challenge (for example, `agentic-rg`).
+
+2. **Locate the frontend application resource**
+
+    In the resource group view, identify the **frontend application** that hosts the user interface for the Multi‑Agent Custom Automation Engine. Depending on the template version, this is typically:
+
+    - An **Azure Container App** or
+    - An **Azure App Service (Web App)**
+
+    Look for a name that corresponds to the web/frontend component of the solution.
+
+3. **Open the application URL**
+
+    - Open the frontend resource.
+    - In the **Overview** blade, locate the **URL** (for example, `https://&lt;app-name&gt;.azurewebsites.net` or the Container App URL).
+    - Click the URL to launch the **multi‑agent automation interface** in your browser.
+
+4. **Review available teams in the UI**
+
+    Once the web application loads:
+
+    - Use the application’s **navigation panel** or home screen to find the list of available **Teams** or **Agent Teams**.
+    - Confirm that **five preconfigured teams** are visible, each corresponding to a different **Contoso business scenario** (for example, HR, Marketing, Customer Success, Finance, and IT Operations themed workflows).
+
+    This verifies that team configurations were successfully uploaded and that the multi‑agent engine is ready for end‑to‑end workflow testing in subsequent steps.
+
+### Use Case 1: Retail Customer Success Team
+
+**Scenario** Work with the **Retail Customer Success Team** to improve customer satisfaction and retention through multi‑agent collaboration.
+
+**Agents in this team**
+
+- **CustomerDataAgent** – Accesses internal customer profiles and interaction history.
+
+- **OrderDataAgent** – Accesses order, inventory, and fulfillment information.
+
+- **AnalysisRecommendationAgent** – Analyzes all available data and generates prioritized recommendations.
+
+- **ProxyAgent** – Acts as the primary interface to the user, requesting clarification when instructions are incomplete or ambiguous.
+
+#### Testing Steps – Satisfaction Plan Workflow
+
+1. **Select the Retail Customer Success Team**
+
+    - In the application UI, ensure the **Retail Customer Success Team** is selected as the active team.
+
+2. **Trigger the “Satisfaction Plan” quick task**
+
+    - From the **Quick Tasks** panel, choose **Satisfaction Plan**.
+    - Click **Submit** to start the workflow.
+
+3. **Wait for the proposed task plan**
+
+    - Allow approximately **15–20 seconds** for the system to generate a proposed plan.
+    - The agents will collaborate in the background to analyze customer data and design an action plan.
+
+4. **Review the proposed plan for Emily Thompson**
+
+    - Inspect the output area to review the system’s analysis of **Emily Thompson’s** satisfaction with Contoso.
+    - Confirm that the proposed plan contains **four or more actionable steps** aimed at improving satisfaction and retention.
+
+5. **Inspect agent details**
+
+    - Click the **Details** button associated with the plan.
+    - Review which **agents** participated in the workflow and how responsibilities were divided (for example, which agent pulled data, which agent analyzed it, and which coordinated the response).
+
+6. **Approve the task plan**
+
+    - Click the **Approve Task Plan** button to confirm that the suggested plan should be executed.
+
+7. **Observe multi‑agent execution**
+
+    - Watch the execution status for **1–2 minutes**.
+    - You should see stages such as:
+        - **Thinking process**
+        - **Processing your plan**
+        - **Coordinating with AI agents**
+
+8. **Review the final output**
+
+    - Once execution completes, review the **final output** generated by the agents.
+    - Note how the system transforms the initial “Satisfaction Plan” request into concrete, coordinated actions across multiple agents (for example, follow‑up outreach, targeted offers, or support interventions).
+
+### Use Case 2: Contract Compliance Review Team
+
+**Scenario** Explore contract document analysis for **compliance** and **risk assessment** using a specialized team of agents.
+
+**Agents in this team**
+
+- **Contract Summary Agent** – Analyzes contract structure, sections, and key terms to produce concise, human‑readable summaries.
+
+- **Contract Risk Agent** – Identifies potential risks, exposure areas, and compliance issues within the contract (for example, unfavorable clauses, missing protections, or ambiguous language).
+
+- **Contract Compliance Agent** – Validates the contract against relevant **regulatory** and **policy** requirements (such as data privacy, industry standards, or internal Contoso compliance guidelines).
+
+#### Testing Steps – NDA Contract Review Workflow
+
+1. **Switch to the Contract Compliance Review Team**
+
+    - In the application UI, click on the **Contoso icon** (or team selector) to change teams.
+    - From the **Current Team** dropdown, choose **Contract Compliance Review Team**.
+    - Click **Continue** to confirm the team selection.
+
+2. **Trigger the “NDA Contract Review” quick task**
+
+    - From the **Quick Tasks** panel, select **NDA Contract Review**.
+    - Click **Submit** to start the workflow.
+
+3. **Wait for the proposed task plan**
+
+    - Allow approximately **15–20 seconds** for the system to generate a proposed review plan.
+    - During this time, the Contract Summary, Risk, and Compliance agents collaborate to analyze the NDA.
+
+4. **Monitor multi‑agent collaboration**
+
+    - Observe how different agents contribute their specialized analysis (for example, summary generation, risk identification, and compliance checks).
+    - Review the **comprehensive compliance assessment** produced through this coordinated analysis.
+
+5. **Inspect agent details**
+
+    - Click the **Details** button associated with the proposed plan.
+    - Review which **agents** were involved and how responsibilities were divided across summary, risk, and compliance checks.
+
+6. **Approve the task plan**
+
+    - Click the **Approve Task Plan** button to confirm that the suggested contract review actions should be executed.
+
+7. **Observe multi‑agent execution**
+
+    - Watch the execution status for **1–2 minutes**.
+    - You should see stages such as:
+        - **Thinking process**
+        - **Processing your plan**
+        - **Coordinating with AI agents**
+
+8. **Review the final output**
+
+    - Once execution completes, review the **final output** generated by the agents.
+    - Confirm that the results include:
+        - A clear summary of the NDA
+        - Identified risks or potential issues
+        - A structured compliance assessment with recommendations or next steps.
+
+### Use Case 3: RFP Team
+
+**Scenario** Explore **RFP** and **contract** document analysis for summarization, risk evaluation, and compliance validation using a dedicated team of agents.
+
+**Agents in this team**
+
+- **RFP Summary Agent** – Summarizes RFP and contract documents into structured, easy‑to‑understand overviews (for example, scope, timelines, obligations, and key commercial terms).
+
+- **RFP Risk Agent** – Identifies delivery, financial, operational, and compliance‑related risks present in the RFP or contract (such as aggressive SLAs, unfavorable liability clauses, or unclear acceptance criteria).
+
+- **RFP Compliance Agent** – Detects compliance gaps against applicable **regulations**, internal **policies**, and standard **contracting practices**, flagging areas that may require negotiation, exception approvals, or remediation actions.
+
+#### Testing Steps – RFP Document Summary Workflow
+
+1. **Switch to the RFP Team**
+
+    - In the application UI, click on the **Contoso icon** (or team selector) to change teams.
+    - From the **Current Team** dropdown, choose **RFP Team**.
+    - Click **Continue** to confirm the team selection.
+
+2. **Trigger the “RFP Document Summary” quick task**
+
+    - From the **Quick Tasks** panel, select **RFP Document Summary**.
+    - Click **Submit** to send the request.
+
+3. **Review the proposed plan**
+
+    - Observe the UI as the system triggers the **Generating Plan Action**.
+    - A **Proposed Plan** should appear with **three or more steps**, outlining how the RFP will be summarized, risk‑assessed, and checked for compliance.
+
+4. **Approve the task plan**
+
+    - Click the **Approve Task Plan** button to proceed with execution of the proposed steps.
+
+5. **Monitor multi‑agent collaboration**
+
+    - Watch how the **RFP Summary**, **RFP Risk**, and **RFP Compliance** agents contribute their specialized analysis during execution.
+    - Note how tasks are broken down and delegated among the agents.
+
+6. **Review the final consolidated assessment**
+
+    - After execution completes, review the **final consolidated RFP assessment** produced by the system.
+    - Confirm that it includes:
+        - A structured summary of the RFP
+        - Identified risks across delivery, financial, operational, and compliance dimensions
+        - A compliance view highlighting gaps against regulations, policies, and standard contracting practices.
+
+### Use Case 4: Product Marketing Team
+
+**Scenario** Explore **product‑related marketing workflows**, including product information retrieval and campaign content generation, through coordinated multi‑agent collaboration.
+
+**Agents in this team**
+
+- **Product Agent** – Provides product details, supports product management activities, analyzes sales data, and coordinates with marketing and support teams.
+
+- **Marketing Agent** – Focuses on marketing strategy, campaign creation, and market data analysis to design effective go‑to‑market plans and messaging.
+
+- **Proxy Agent** – Acts as a clarification agent when user instructions are unclear or incomplete, asking follow‑up questions to gather the necessary context before triggering downstream workflows.
+
+#### Testing Steps – Draft Press Release Workflow
+
+1. **Switch to the Product Marketing Team**
+
+    - In the application UI, click on the **Contoso icon** (or team selector) to change teams.
+    - From the **Current Team** dropdown, choose **Product Marketing Team**.
+    - Click **Continue** to confirm the team selection.
+
+2. **Trigger the “Draft a press release” quick task**
+
+    - From the **Quick Tasks** panel, select **Draft a press release**.
+    - Click **Submit** to send the request.
+
+3. **Review the proposed plan**
+
+    - Observe the UI as the system triggers the **Generating Plan Action**.
+    - A **Proposed Plan** should appear with **three or more steps**, outlining how product information will be gathered, messaging crafted, and content refined.
+
+4. **Approve the task plan**
+
+    - Click the **Approve Task Plan** button to proceed with execution of the proposed steps.
+
+5. **Monitor multi‑agent collaboration**
+
+    - Watch how the **Product**, **Marketing**, and **Proxy** agents contribute their specialized inputs during execution.
+    - Note how product data, marketing strategy, and clarification prompts are combined into a cohesive workflow.
+
+6. **Review the final marketing content**
+
+    - After execution completes, review the **final press release draft** generated by the system.
+    - Confirm that the output reflects accurate product information, clear positioning, and audience‑appropriate messaging produced through coordinated agent execution.
+
+### Use Case 5: HR Onboarding Team
+
+**Scenario** Explore **employee onboarding workflows**, including HR coordination, IT setup, and policy‑related activities, through coordinated multi‑agent collaboration. This use case demonstrates how multiple specialized agents work together to streamline the onboarding experience for new employees.
+
+**Agents in this team**
+
+- **HRHelperAgent** – Assists with employee onboarding tasks, benefits enrollment, HR policies, and general HR‑related inquiries.
+
+- **TechnicalSupportAgent** – Handles IT‑related onboarding work such as laptop provisioning, account and email setup, access requests, and technical support.
+
+- **ProxyAgent** – Acts as a clarification agent when user instructions are unclear or additional details are required, gathering missing information before triggering HR and IT workflows.
+
+#### Testing Steps – Onboard New Employee Workflow
+
+1. **Switch to the HR Onboarding Team**
+
+    - In the application UI, click the **Contoso icon** (or team selector) to change teams.
+    - From the **Current Team** dropdown, choose **HR Onboarding Team**.
+    - Click **Continue** to confirm the team selection.
+
+2. **Trigger the “Onboard New Employee” quick task**
+
+    - From the **Quick Tasks** panel, select **Onboard New Employee**.
+    - Click **Submit** to send the request.
+
+3. **Review the proposed onboarding plan**
+
+    - Observe the UI as the system triggers the **Generating Plan Action**.
+    - A **Proposed Plan** should appear with **three or more onboarding steps**, outlining the coordinated HR and IT tasks (for example, paperwork, orientation, account setup, device provisioning).
+
+4. **Approve the task plan**
+
+    - Click the **Approve Task Plan** button to allow the multi‑agent workflow to proceed.
+
+5. **Provide onboarding details when prompted**
+
+    - When the **ProxyAgent** asks for clarification, respond **once** with all required details in a single message to avoid repeated follow‑up questions. For this lab, use:
+
+      ```text
+      Department: HR, Role: Manager, Start Date: 11/23/2025, Orientation Date: 11/25/2025, Location: Onsite, Email: js@contoso.com, Mentor: Jim Shorts, Benefits Package: Standard, ID Card: Yes, Salary: 70000, Laptop: Dell 14 Plus.
+      ```
+
+6. **Observe coordinated HR and IT execution**
+
+    - Watch how **HRHelperAgent** and **TechnicalSupportAgent** collaborate to complete HR and IT onboarding tasks.
+    - Note actions such as preparing HR documentation, scheduling orientation, initiating benefits setup, and provisioning the employee’s laptop and accounts.
+
+7. **Review the final onboarding outputs**
+
+    - After execution completes, review the **final onboarding summary** generated by the system.
+    - Confirm that it reflects the provided details and clearly outlines the completed and pending onboarding steps for the new employee.
+
+---
+## Troubleshooting
+
+Use this section to quickly diagnose and resolve the most common issues encountered during the lab.
+
+### Deployment Issues (`azd up`)
+
+- **Symptom:** `azd up` fails with region or quota errors.
+  - **Checks:**
+    - Confirm you selected a **supported region** for all prompts (for example, `UK South`/`West US` for Azure AI services and `Central US` for infrastructure).
+    - Verify that the **resource group** you selected matches the one you created earlier (for example, `agentic-rg`).
+  - **Fix:** Rerun `azd up` and carefully re‑enter the prompted values.
+
+- **Symptom:** `azd up` hangs or fails part‑way through.
+  - **Checks:**
+    - Ensure your **network connection** is stable.
+    - Confirm you are still **signed in** (`az account show` should succeed).
+  - **Fix:** If needed, run `az login` again, then re‑run `azd up`.
+
+### Team Configuration Script Issues
+
+- **Symptom:** `Selecting-Team-Config-And-Data.ps1` fails or cannot find the web app.
+  - **Checks:**
+    - Make sure you run the script from the **project root folder**.
+    - Confirm that `azd up` completed successfully and printed a **frontend URL**.
+  - **Fix:** Rerun the script and ensure you enter `6` when prompted to deploy all use cases.
+
+### Application Access & UI Issues
+
+- **Symptom:** The frontend URL does not load.
+  - **Checks:**
+    - Open the **frontend resource** in the Azure Portal and copy the latest **URL** from the Overview blade.
+    - Verify that the resource is in the same **resource group** and **subscription** you used for deployment.
+  - **Fix:** If the app is stopped, start it from the Azure Portal and retry.
+
+- **Symptom:** The app loads, but the list of teams is empty or incomplete.
+  - **Checks:**
+    - Confirm the **team configuration script** completed without errors.
+  - **Fix:** Rerun `Selecting-Team-Config-And-Data.ps1` and select `6` to deploy all teams.
+
+### Workflow Execution Issues
+
+- **Symptom:** Workflows never progress beyond “Thinking process” or “Generating Plan Action”.
+  - **Checks:**
+    - Ensure the **Azure AI / OpenAI resources** were successfully provisioned (no failed deployments in the resource group).
+  - **Fix:** Re‑run `azd up` to repair missing resources, then retry the workflow.
+
+- **Symptom:** Proxy agents keep asking follow‑up questions.
+  - **Checks:**
+    - Confirm you are providing **all requested details in a single response**, especially in the HR Onboarding use case.
+  - **Fix:** Re‑submit a complete answer (as shown in the HR Onboarding testing steps) to avoid repeated clarifications.
+
+If issues persist in the hosted lab environment, use the lab’s support channel or reset the environment and repeat the deployment steps.
+
+---
+## Resources & Documentation
+
+Use the following references to deepen your understanding of Azure AI, Foundry, Azure infrastructure, and multi‑agent systems used in this lab:
+
+### Core AI & Agentic Platform
+
+- **Microsoft Foundry / Azure AI Studio** – Central hub for building and managing Azure AI solutions:  
+  [https://ai.azure.com/](https://ai.azure.com/)
+
+- **Azure OpenAI & Foundry API Reference** – Detailed reference for Azure OpenAI and Foundry APIs:  
+  [https://learn.microsoft.com/en-us/azure/ai-foundry/openai/reference?view=foundry-classic](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/reference?view=foundry-classic)
+
+- **Microsoft Agent Framework** – Overview and concepts for building agentic solutions with Microsoft’s Agent Framework:  
+  [https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview)
+
+- **Multi‑Agent Systems & AI Architecture Best Practices** – Azure Architecture Center guidance for AI/ML and multi‑agent patterns:  
+  [https://learn.microsoft.com/en-us/azure/architecture/ai-ml/](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/)
+
+- **Prompt Engineering for Azure OpenAI** – Techniques for crafting effective prompts for LLM‑driven agents:  
+  [https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/prompt-engineering](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/prompt-engineering)
+
+### Azure Platform & Hosting Basics
+
+- **Azure Portal Overview** – How to navigate the portal, locate resource groups, and inspect resources:  
+  [https://learn.microsoft.com/en-us/azure/azure-portal/azure-portal-overview](https://learn.microsoft.com/en-us/azure/azure-portal/azure-portal-overview)
+
+- **Azure Resource Groups** – How Azure resources are grouped, managed, and deployed:  
+  [https://learn.microsoft.com-en-us/azure/azure-resource-manager/management/overview](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/overview)
+
+- **Azure Monitor & Log Analytics Overview** – Foundations for logs, metrics, and troubleshooting deployed applications:  
+  [https://learn.microsoft.com-en-us/azure/azure-monitor/overview](https://learn.microsoft.com/en-us/azure/azure-monitor/overview)
+
+- **Azure Container Apps Overview** – Recommended runtime for containerized multi‑agent backends (if used by your environment):  
+  [https://learn.microsoft.com-en-us/azure/container-apps/overview](https://learn.microsoft.com/en-us/azure/container-apps/overview)
+
+### Developer Tooling
+
+- **Azure Developer CLI (`azd`) Documentation** – Command reference and examples for `azd`‑based deployments:  
+  [https://learn.microsoft.com-en-us/azure/developer/azure-developer-cli/](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/)
+
+- **Git Basics** – Core Git concepts and workflows used when cloning and working with the lab repo:  
+  [https://learn.microsoft.com-en-us/devops/develop/git/what-is-git](https://learn.microsoft.com/en-us/devops/develop/git/what-is-git)
+
+- **Docker Basics** – Key Docker concepts (images, containers) useful for understanding local builds and containerized apps:  
+  [https://learn.microsoft.com-en-us/visualstudio/docker/docker-basics](https://learn.microsoft.com/en-us/visualstudio/docker/docker-basics)
+
+- **Python Environments & `venv`** – How to install Python and manage virtual environments (optional, but helpful context):  
+  [https://learn.microsoft.com-en-us/training/modules/python-install-configure/](https://learn.microsoft.com/en-us/training/modules/python-install-configure/)
+
+---
+## Success Criteria
+
+You have successfully completed this lab when:
+
+- You have successfully **accessed the multi‑agent automation application interface** via the deployed frontend URL.
+
+- You have **tested the Retail Customer Success Team workflow** (Satisfaction Plan) and observed multi‑agent collaboration during planning and execution.
+
+- You have experienced the full lifecycle of **task planning, agent coordination, and execution phases** across at least one use case.
+
+- You have **reviewed agent‑generated outputs**, including analyses, recommendations, and multi‑step action plans.
+
+- You have **tested the Contract Compliance Review Team workflow** (NDA Contract Review) and observed how specialized agents contribute summary, risk, and compliance insights.
+
+- You understand at a high level **how different agents collaborate** across teams (Retail, Contract Compliance, RFP, Product Marketing, and HR Onboarding) to deliver comprehensive business solutions for Contoso.
