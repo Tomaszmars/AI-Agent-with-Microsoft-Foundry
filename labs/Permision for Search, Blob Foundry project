@@ -1,0 +1,310 @@
+
+# Azure AI Search & Microsoft Foundry Permissions for Agents
+
+This document describes how to configure **permissions** for:
+
+* **Azure AI Search**
+* **Azure Blob Storage**
+* **Microsoft Foundry resource & project**
+
+so that **agents in a Foundry project** can securely:
+
+* Read documents from **Blob Storage** via **Azure AI Search**
+* Call **models deployed in Foundry**
+
+
+## 1. Architecture Overview
+
+At a high level, you have:
+
+* An **Azure AI Search** service with a **system-assigned managed identity**
+* A **Blob Storage** account that stores the source documents
+* A **Microsoft Foundry** resource with a **Foundry project** that hosts agents and models
+* A **user** (e.g., `ODL_User 2172672`) who manages the Foundry project and OpenAI resources
+
+### 1.1 Component & Permission Diagram (Mermaid)
+
+```mermaid
+flowchart LR
+    subgraph Azure
+        User[Human User<br/>ODL_User 2172672]
+
+        SA[Blob Storage<br/>(Storage Account)]
+        AS[Azure AI Search<br/>my-search-service-2172672]
+        SMI[(Search Service<br/>Managed Identity)]
+
+        F[Microsoft Foundry Resource<br/>my-foundry-2172672]
+        FP[(Foundry Project<br/>Managed Identity<br/>my-project-2172672)]
+
+        Agents[Agents / Apps<br/>in Foundry Project]
+    end
+
+    %% Managed identity relationships
+    AS --- SMI
+    F --- FP
+
+    %% Permissions to Blob
+    SMI -- "Storage Blob Data Reader" --> SA
+
+    %% Permissions to Azure AI Search
+    FP -- "Search Index Data Reader" --> AS
+    FP -- "Search Service Contributor" --> AS
+
+    %% Permissions to Foundry resource
+    User -- "Azure AI Project Manager" --> F
+    User -- "Cognitive Services OpenAI Contributor" --> F
+
+    SMI -- "Cognitive Services OpenAI User" --> F
+
+    %% Runtime flow
+    Agents --> FP
+    FP --> AS
+    AS --> SA
+    AS --> F
+```
+
+---
+
+## 2. Identities and Roles
+
+### 2.1 Identities
+
+* **Search service managed identity**  
+  Created when you enable **System-assigned** identity on the Azure AI Search service.
+
+* **Foundry project managed identity**  
+  Represents the **Foundry project** that hosts agents and uses Azure AI Search.
+
+* **Human user**  
+  For example: `ODL_User 2172672` (your admin/developer account).
+
+### 2.2 Role Matrix
+
+| Identity                         | Target Resource / Scope         | Azure Role(s)                             | Purpose (short) |
+|----------------------------------|----------------------------------|-------------------------------------------|-----------------|
+| Search service managed identity  | Storage account (Blob)          | **Storage Blob Data Reader**              | Allow AI Search to read blobs for indexing. |
+| Search service managed identity  | Foundry resource                | **Cognitive Services OpenAI User**        | Allow AI Search to call Foundry models. |
+| Foundry project managed identity | Azure AI Search service         | **Search Index Data Reader**, **Search Service Contributor** | Allow agents to query indexes and manage search objects. |
+| Human user (ODL_User 2172672)    | Foundry resource                | **Azure AI Project Manager**, **Cognitive Services OpenAI Contributor** | Allow user to manage Foundry project & OpenAI resources. |
+
+---
+
+## 3. Prerequisites
+
+You should already have:
+
+* An **Azure subscription**
+* An **Azure AI Search** service (e.g., `my-search-service-2172672`)
+* An **Azure Storage account** with documents in Blob containers
+* A **Microsoft Foundry** resource (e.g., `my-foundry-2172672`)
+* A **Foundry project** (e.g., `my-project-2172672`)
+* A user account (e.g., `ODL_User 2172672`) that will manage the project
+
+You can replace example names with your own resource names.
+
+---
+
+## 4. Step 1 – Enable Managed Identity and RBAC on Azure AI Search
+
+### 4.1 Enable system-assigned managed identity
+
+1. In the **Azure portal**, search for **AI Search** and select **AI Search** from *Services*.
+2. Select your search service (e.g., `my-search-service-2172672`).
+3. In the left-hand menu, under **Settings**, select **Identity**.
+4. On the **System assigned** tab, set **Status** to **On**.
+5. Click **Save**.
+
+This creates a **system-assigned managed identity** for the search service.
+
+### 4.2 Configure data-plane authentication mode
+
+1. Still on the search service, under **Settings**, select **Keys**.
+2. Under **API access control**, select:
+
+   * **Both** – to allow both API keys and **Role-based access control** (RBAC), matching typical lab scenarios.
+
+> In production, prefer **Role-based access control** only.
+
+---
+
+## 5. Step 2 – Grant Azure AI Search Access to Blob Storage
+
+This allows the **search service managed identity** to read documents from **Blob Storage** using indexers.
+
+1. In the Azure portal, search for **Storage accounts** and select **Storage accounts**.
+2. Open the storage account that contains the documents to be indexed.
+3. In the left-hand menu, select **Access control (IAM)**.
+4. Click **+ Add** → **Add role assignment**.
+5. On the **Role** tab:
+   1. Under **Job function roles**, search for **Storage Blob Data Reader**.
+   2. Select **Storage Blob Data Reader**.
+   3. Click **Next**.
+6. On the **Members** tab:
+   1. Under **Assign access to**, select **Managed identity**.
+   2. Click **+ Select members**.
+   3. In **Managed identity**, choose **Search service**.
+   4. Select your search service (e.g., `my-search-service-2172672`).
+   5. Click **Select**.
+7. Click **Review + assign** twice to confirm.
+
+Result: AI Search can read blobs from the storage account using its managed identity.
+
+---
+
+## 6. Step 3 – Grant Foundry Project Managed Identity Access to Azure AI Search
+
+Here you allow the **Foundry project managed identity** (e.g., `my-project-2172672`) to:
+
+* Read index data (queries)
+* Manage search objects (indexes, indexers, skillsets, etc.)
+
+### 6.1 Assign **Search Index Data Reader** role
+
+1. In the Azure portal, go to your **AI Search** service (e.g., `my-search-service-2172672`).
+2. In the left-hand menu, select **Access control (IAM)**.
+3. Click **+ Add** → **Add role assignment**.
+4. On the **Role** tab:
+   1. Under **Job function roles**, search for **Search Index Data Reader**.
+   2. Select **Search Index Data Reader**.
+   3. Click **Next**.
+5. On the **Members** tab:
+   1. Under **Assign access to**, select **Managed identity**.
+   2. Click **+ Select members**.
+   3. In **Managed identity**, select **Foundry project**.
+   4. Choose your Foundry project identity (e.g., `my-project-2172672`).
+   5. Click **Select**.
+6. Click **Review + assign** twice to confirm.
+
+### 6.2 Assign **Search Service Contributor** role
+
+1. Still on the **Access control (IAM)** blade of the **AI Search** service, click **+ Add** → **Add role assignment** again.
+2. On the **Role** tab:
+   1. Under **Job function roles**, search for **Search Service Contributor**.
+   2. Select **Search Service Contributor**.
+   3. Click **Next**.
+3. On the **Members** tab:
+   1. Under **Assign access to**, select **Managed identity**.
+   2. Click **+ Select members**.
+   3. In **Managed identity**, select **Foundry project**.
+   4. Choose your Foundry project identity (e.g., `my-project-2172672`).
+   5. Click **Select**.
+4. Click **Review + assign** twice to confirm.
+
+Result: the Foundry project can both **query** Azure AI Search indexes and **manage** search objects for agent/knowledge base scenarios.
+
+---
+
+## 7. Step 4 – Grant the User Access to Manage the Foundry Project
+
+Now assign roles to your **human user** (e.g., `ODL_User 2172672`) so they can manage the Foundry project and OpenAI resources.
+
+1. In the Azure portal, search for **Microsoft Foundry**.
+2. Select **Microsoft Foundry** from the results.
+3. In the left-hand menu, select **Foundry**, then select your Foundry instance (e.g., `my-foundry-2172672`).
+4. Open **Access control (IAM)**.
+
+### 7.1 Assign **Azure AI Project Manager** to the user
+
+1. Click **+ Add** → **Add role assignment**.
+2. On the **Role** tab:
+   1. Under **Job function roles**, search for **Azure AI Project Manager**.
+   2. Select **Azure AI Project Manager**.
+   3. Click **Next**.
+3. On the **Members** tab:
+   1. Under **Assign access to**, select **Users, group, or service principal**.
+   2. Click **+ Select members**.
+   3. Search for your user, for example:  
+      `odl_user_2172672@sandboxailabs1012.onmicrosoft.com`.
+   4. Select **ODL_User 2172672**.
+   5. Click **Select**.
+4. Click **Review + assign** twice to finalize.
+
+### 7.2 Assign **Cognitive Services OpenAI Contributor** to the same user
+
+Repeat the steps above, but on the **Role** tab:
+
+1. Search for and select **Cognitive Services OpenAI Contributor**.
+2. On the **Members** tab, again choose **ODL_User 2172672**.
+3. Click **Review + assign** twice to confirm.
+
+Result: the user can manage the Foundry project, deployments, and OpenAI configuration.
+
+---
+
+## 8. Step 5 – Grant Azure AI Search Access to Foundry Models
+
+This allows the **Azure AI Search managed identity** to call **Foundry models** (embeddings, chat completions, etc.) using Entra ID, without API keys.
+
+1. In the same **Foundry** resource (e.g., `my-foundry-2172672`), open **Access control (IAM)**.
+2. Click **+ Add** → **Add role assignment**.
+3. On the **Role** tab:
+   1. Under **Job function roles**, search for **Cognitive Services OpenAI User**.
+   2. Select **Cognitive Services OpenAI User**.
+   3. Click **Next**.
+4. On the **Members** tab:
+   1. Under **Assign access to**, select **Managed identity**.
+   2. Click **+ Select members**.
+   3. In **Managed identity**, select **Search service**.
+   4. Choose your search service identity (e.g., `my-search-service-2172672`).
+   5. Click **Select**.
+5. Click **Review + assign** twice to finalize.
+
+Result: Azure AI Search can use its managed identity to call Foundry-hosted models in pipelines (e.g., vectorizers, agentic retrieval, knowledge bases).
+
+---
+
+## 9. Verification Checklist
+
+Use this checklist to quickly confirm the configuration:
+
+**Azure AI Search**
+
+* **Identity → System-assigned**: **On**
+* **Settings → Keys → API access control**: **Both** (or **Role-based access control** only in production)
+* **Access control (IAM)**:
+  * Foundry project managed identity has:
+    * **Search Index Data Reader**
+    * **Search Service Contributor**
+
+**Storage Account**
+
+* **Access control (IAM)**:
+  * Search service managed identity has:
+    * **Storage Blob Data Reader**
+
+**Foundry Resource**
+
+* **Access control (IAM)**:
+  * Human user (`ODL_User 2172672`) has:
+    * **Azure AI Project Manager**
+    * **Cognitive Services OpenAI Contributor**
+  * Search service managed identity has:
+    * **Cognitive Services OpenAI User**
+
+If all of the above are in place, agents in the Foundry project should be able to:
+
+* Access indexed content in **Azure AI Search**
+* Use **Foundry models** securely via managed identities and RBAC
+* Avoid hard-coded secrets and API keys in configuration
+
+---
+
+## 10. References (Microsoft Learn)
+
+* **Azure AI Search RBAC (roles)**  
+  https://learn.microsoft.com/en-us/azure/search/search-security-rbac
+
+* **Enable role-based access for Azure AI Search**  
+  https://learn.microsoft.com/en-us/azure/search/search-security-enable-roles
+
+* **Configure managed identities for Azure AI Search**  
+  https://learn.microsoft.com/en-us/azure/search/search-how-to-managed-identities
+
+* **Connect Azure AI Search to Azure Storage using managed identity**  
+  https://learn.microsoft.com/en-us/azure/search/search-howto-managed-identities-storage
+
+* **Agentic retrieval quickstart (AI Search + Foundry)**  
+  https://learn.microsoft.com/en-us/azure/search/get-started-portal-agentic-retrieval
+
+* **Role-based access control for Azure OpenAI / Foundry**  
+  https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/role-based-access-control
